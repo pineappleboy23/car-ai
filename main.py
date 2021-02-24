@@ -54,20 +54,23 @@ class Car(object):
             self.distance_checkers.append(DistanceCheckers(self, num))
 
     def generate_ai_values(self):
-        self.forward_ai_requirement = random.choice(( 1, 2, 3)) * random.random()
+        self.forward_ai_requirement = random.random() - random.random() + 1
         self.forward_ai_values = []
         for val in range(16):
-            self.forward_ai_values.append(random.choice((-3,-2, -1, 1, 2, 3)) * random.random())
+            much_temp = random.random() - random.random() + 1
+            self.forward_ai_values.append(much_temp)
 
-        self.right_ai_requirement = random.choice(( 1, 2, 3)) * random.random()
+        self.right_ai_requirement = random.random() - random.random() + 1
         self.right_ai_values = []
         for val in range(16):
-            self.right_ai_values.append(random.choice((-3, -2, -1, 1, 2, 3)) * random.random())
+            much_temp = random.random() - random.random() + 1
+            self.right_ai_values.append(much_temp)
 
-        self.left_ai_requirement = random.choice(( 1, 2, 3)) * random.random()
+        self.left_ai_requirement =  random.random() - random.random() + 1
         self.left_ai_values = []
         for val in range(16):
-            self.left_ai_values.append(random.choice((-3, -2, -1, 1, 2, 3)) * random.random())
+            much_temp = random.random() - random.random() + 1
+            self.left_ai_values.append(much_temp)
         #ai_values.append((self.forward_ai_values,self.forward_ai_requirement,self.left_ai_values,self.left_ai_requirement,self.right_ai_values,self.right_ai_requirement))
         # if len(ai_values) > 300:
         #    ai_values = []
@@ -79,6 +82,7 @@ class Car(object):
 
         if self.reward == 800:
             print((self.forward_ai_values, self.forward_ai_requirement, self.left_ai_values, self.left_ai_requirement, self.right_ai_values, self.right_ai_requirement))
+            print("really good ^^^")
 
         self.input_values = []
         for dc in self.distance_checkers:
@@ -111,10 +115,7 @@ class Car(object):
         self.combined_in_ai_forward = []
         for val in range(16):
 
-            print(self.input_values[val])
-
-            self.combined_in_ai_forward.append( self.input_values[val] * self.neg_to_frac(self.forward_ai_values[val]))
-
+            self.combined_in_ai_forward.append( self.input_values[val] * self.forward_ai_values[val])
         if statistics.mean(self.combined_in_ai_forward) / statistics.mean(self.input_values) > self.forward_ai_requirement:
             self.move_forward()
 
@@ -122,26 +123,17 @@ class Car(object):
 
         self.combined_in_ai_right = []
         for val in range(16):
-            self.combined_in_ai_right.append(self.input_values[val] * self.neg_to_frac(self.right_ai_values[val]))
+            self.combined_in_ai_right.append(self.input_values[val] * self.right_ai_values[val])
 
         if statistics.mean(self.combined_in_ai_right) / statistics.mean(self.input_values) > self.right_ai_requirement:
             self.turn_right()
 
         self.combined_in_ai_left = []
         for val in range(16):
-            self.combined_in_ai_left.append(self.input_values[val] * self.neg_to_frac(self.left_ai_values[val]))
+            self.combined_in_ai_left.append(self.input_values[val] * self.left_ai_values[val])
 
         if statistics.mean(self.combined_in_ai_left) / statistics.mean(self.input_values) > self.left_ai_requirement:
             self.turn_left()
-
-
-    def neg_to_frac(self, num_in):
-        if num_in < 0:
-            return 1 / (num_in * -1)
-        elif num_in > 0:
-            return num_in
-        else:
-            return .5
 
     def turn_left(self):
         self.angle += 5
@@ -167,23 +159,25 @@ class Car(object):
 
 
     def ai_death(self):
-        self.ai_change_rate *= (self.reward + 5) / (random.random() * 50)
-        self.forward_ai_requirement *= (1 + (random.random()/self.ai_change_rate))
+        glorp1 = (self.reward + 50)/20
+        glorp = 1/glorp1
+        self.ai_change_rate = glorp
+        self.forward_ai_requirement *= (1 + ((random.random() - random.random() ) * self.ai_change_rate))
         self.temp_forward_ai_values = []
         for val in self.forward_ai_values:
-            self.temp_forward_ai_values.append(val * (1 + (random.random()/self.ai_change_rate)))
+            self.temp_forward_ai_values.append(val * (1 + ((random.random() - random.random() ) * self.ai_change_rate)))
         self.forward_ai_values = self.temp_forward_ai_values
 
-        self.right_ai_requirement *= (1 + (random.random()/self.ai_change_rate))
+        self.right_ai_requirement *= (1 + ((random.random() - random.random() ) * self.ai_change_rate))
         self.temp_right_ai_values = []
         for val in self.right_ai_values:
-            self.temp_right_ai_values.append(val * (1 + (random.random()/self.ai_change_rate)))
+            self.temp_right_ai_values.append(val * (1 + ((random.random() - random.random() ) * self.ai_change_rate)))
         self.right_ai_values = self.temp_right_ai_values
 
-        self.left_ai_requirement *= (1 + (random.random()/self.ai_change_rate))
+        self.left_ai_requirement *= (1 + ((random.random() - random.random() ) * self.ai_change_rate))
         self.temp_left_ai_values = []
         for val in self.left_ai_values:
-            self.temp_left_ai_values.append(val * (1 + (random.random()/self.ai_change_rate)))
+            self.temp_left_ai_values.append(val * (1 + ((random.random() - random.random() ) * self.ai_change_rate)))
         self.left_ai_values = self.temp_left_ai_values
 
         #print((self.forward_ai_values, self.forward_ai_requirement, self.left_ai_values, self.left_ai_requirement,self.right_ai_values, self.right_ai_requirement))

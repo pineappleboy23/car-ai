@@ -8,8 +8,8 @@ import time
 start_time = round(time.time())
 g_time = round(time.time()) - start_time
 ai_change_rate = 1 # higher number means slower change
-ai_scores = []
 ai_values = []
+generation = 0
 
 clock = pg.time.Clock()
 
@@ -42,12 +42,12 @@ class Car(object):
         self.id = id_in
         self.input_values = []
         self.generate_ai_values()
-        self.gen = 0
         self.derut = False
-        self.last_reward = self.reward
         self.last_x = 0
         self.last_y = 0
-        self.ai_change_rate = ai_change_rate
+        self.ai_change_rate = 1/10
+        self.alive = True
+
 
     def get_distance_checkers(self):
         for num in range(16):
@@ -80,10 +80,6 @@ class Car(object):
 
     def move(self):
 
-        if self.reward == 800:
-            print((self.forward_ai_values, self.forward_ai_requirement, self.left_ai_values, self.left_ai_requirement, self.right_ai_values, self.right_ai_requirement))
-            print("really good ^^^")
-
         self.input_values = []
         for dc in self.distance_checkers:
             temp_1 = dc.update_distance(self)
@@ -94,10 +90,6 @@ class Car(object):
         self.checkpoint_touching()
 
         if self.should_die():
-            self.x = sw // 4
-            self.y = sh // 4
-            self.angle = 90  # set 0?
-            self.update_maths()
             self.ai_death()
 
         if g_time % 4 == 0 and self.derut:
@@ -112,6 +104,8 @@ class Car(object):
         self.update_maths()
 
     def ai_calculations(self):
+        turn_right = False
+        turn_left = False
         self.combined_in_ai_forward = []
         for val in range(16):
 
@@ -126,13 +120,25 @@ class Car(object):
             self.combined_in_ai_right.append(self.input_values[val] * self.right_ai_values[val])
 
         if statistics.mean(self.combined_in_ai_right) / statistics.mean(self.input_values) > self.right_ai_requirement:
-            self.turn_right()
+            turn_right = True
 
         self.combined_in_ai_left = []
         for val in range(16):
             self.combined_in_ai_left.append(self.input_values[val] * self.left_ai_values[val])
 
         if statistics.mean(self.combined_in_ai_left) / statistics.mean(self.input_values) > self.left_ai_requirement:
+            turn_left = True
+
+        if turn_right and turn_left:
+            if statistics.mean(self.combined_in_ai_left) > statistics.mean(self.combined_in_ai_right):
+                self.turn_left
+            else:
+               self.turn_right()
+            turn_right = False
+            turn_left = False
+        if turn_right:
+            self.turn_right()
+        if turn_left:
             self.turn_left()
 
     def turn_left(self):
@@ -157,40 +163,64 @@ class Car(object):
                 else:
                     self.current_checkpoint += 1
 
-
     def ai_death(self):
-        glorp1 = (self.reward + 50)/20
-        glorp = 1/glorp1
-        self.ai_change_rate = glorp
-        self.forward_ai_requirement *= (1 + ((random.random() - random.random() ) * self.ai_change_rate))
+        dead_cars.append(self)
+        self.alive = False
+
+
+
+    def change_ai_values(self, good_car_in):
+
+        self.forward_ai_values = good_car_in.forward_ai_values
+        self.forward_ai_requirement = good_car_in.forward_ai_requirement
+
+        self.right_ai_values = good_car_in.right_ai_values
+        self.right_ai_requirement = good_car_in.right_ai_requirement
+
+        self.left_ai_values = good_car_in.left_ai_values
+        self.left_ai_requirement = good_car_in.left_ai_requirement
+
+
+        self.forward_ai_requirement *= (1 + ((random.random() - random.random()) * self.ai_change_rate))
         self.temp_forward_ai_values = []
         for val in self.forward_ai_values:
-            self.temp_forward_ai_values.append(val * (1 + ((random.random() - random.random() ) * self.ai_change_rate)))
+            self.temp_forward_ai_values.append(val * (1 + ((random.random() - random.random()) * self.ai_change_rate)))
         self.forward_ai_values = self.temp_forward_ai_values
 
-        self.right_ai_requirement *= (1 + ((random.random() - random.random() ) * self.ai_change_rate))
+        self.right_ai_requirement *= (1 + ((random.random() - random.random()) * self.ai_change_rate))
         self.temp_right_ai_values = []
         for val in self.right_ai_values:
-            self.temp_right_ai_values.append(val * (1 + ((random.random() - random.random() ) * self.ai_change_rate)))
+            self.temp_right_ai_values.append(val * (1 + ((random.random() - random.random()) * self.ai_change_rate)))
         self.right_ai_values = self.temp_right_ai_values
 
-        self.left_ai_requirement *= (1 + ((random.random() - random.random() ) * self.ai_change_rate))
+        self.left_ai_requirement *= (1 + ((random.random() - random.random()) * self.ai_change_rate))
         self.temp_left_ai_values = []
         for val in self.left_ai_values:
-            self.temp_left_ai_values.append(val * (1 + ((random.random() - random.random() ) * self.ai_change_rate)))
+            self.temp_left_ai_values.append(val * (1 + ((random.random() - random.random()) * self.ai_change_rate)))
         self.left_ai_values = self.temp_left_ai_values
 
-        #print((self.forward_ai_values, self.forward_ai_requirement, self.left_ai_values, self.left_ai_requirement,self.right_ai_values, self.right_ai_requirement))
-
-        if not g_time - self.time == 0:
-            ai_scores.append(self.reward/(g_time - self.time ))
-
-        self.gen += 1
         self.time = g_time
+        self.x = sw // 4
+        self.y = sh // 4
+        self.angle = 90  # set 0?
+        self.update_maths()
+
         self.reward = 0
         self.current_checkpoint = 0
-        self.last_reward = self.reward
         self.derut = False
+        self.alive = True
+
+    def give_life(self):
+        self.time = g_time
+        self.x = sw // 4
+        self.y = sh // 4
+        self.angle = 90  # set 0?
+        self.update_maths()
+
+        self.reward = 0
+        self.current_checkpoint = 0
+        self.derut = False
+        self.alive = True
 
     def update_maths(self):
         self.rotated_surf = pg.transform.rotate(self.img, self.angle)
@@ -307,8 +337,6 @@ class CheckPoint(object):
 
 
 
-
-
 def redraw_game_window():
     win.fill((0, 180, 0))
 
@@ -329,6 +357,7 @@ def redraw_game_window():
 
     for c in cars:
         if c.id == big_id:
+
             for l in c.distance_checkers:
                 l.draw(win)
             c.draw(win)
@@ -339,7 +368,7 @@ def redraw_game_window():
 
 checkpoints = []
 checkpoints.append(CheckPoint((320,140), 1, 0, (83, 28, 195)))
-checkpoints.append(CheckPoint((406,150), 0, 1, (83, 28, 195)))
+checkpoints.append(CheckPoint((386,140), 0, 1, (83, 28, 195)))
 checkpoints.append(CheckPoint((406,120), 0, 2, (83, 28, 195)))
 checkpoints.append(CheckPoint((506,35), 2, 3, (83, 28, 195)))
 checkpoints.append(CheckPoint((706,35), 2, 4, (83, 28, 195)))
@@ -351,14 +380,17 @@ checkpoints.append(CheckPoint((21,295), 0, 9, (83, 28, 195)))
 
 
 cars = []
-for id in range(50):
+car_amount = 50
+for id in range(car_amount):
     cars.append(Car(id))
 
-smol_barrier = Barrier((390, 290), (30, 80, 30), 3.55) #80 to 30
-big_barrier = Barrier((390, 480), (30, 30, 30), 1.5)
+dead_cars = [] # remove?
 
-big_boundary = Boundary((520, 630), (150, 50, 150), 1.5) # 50 to 150
-smol_boundary = Boundary((530, 420), (150, 150, 150), 3.5)
+smol_barrier = Barrier((390, 290), (0, 180, 20), 3.55) #80 to 30
+big_barrier = Barrier((390, 480), (0, 180, 20), 1.5)
+
+big_boundary = Boundary((540, 630), (150, 150, 150), 1.5) # 50 to 150
+smol_boundary = Boundary((530, 440), (150, 150, 150), 3.5)
 
 running = True
 while running:
@@ -367,11 +399,50 @@ while running:
 
     clock.tick(60)
 
+    if len(dead_cars) == len(cars):
+
+        temp_car_vec = []
+        for c in dead_cars:
+
+            big_id1 = 0
+            biggest_reward1 = -1
+            for c in dead_cars:
+                if biggest_reward1 < c.reward:
+                    biggest_reward1 = c.reward
+                    big_id1 = c.id
+
+            best_car_vec = []
+            for c in dead_cars:
+                if biggest_reward1 == c.reward:
+                    best_car_vec.append(c)
+
+        cars = []
+        for c in dead_cars:
+            if c.id == big_id1:
+                c.give_life()
+                cars.append(c)
+                print()
+            else:
+                c.change_ai_values(random.choice(best_car_vec))
+                cars.append(c)
+
+
+
+        dead_cars = []
+        generation += 1
+        print("generation and best score:")
+        print(generation)
+        print(biggest_reward1)
+
+
     for c in cars:
-        c.move()
+        if c.alive:
+            c.move()
 
     for event in pg.event.get():
         if event.type == pg.QUIT:
+            for c in cars:
+                print(str(c.left_ai_values) +  ' <lav '  + str(c.left_ai_requirement) +  ' <lar '  + str(c.right_ai_values) +  ' <rav '  + str(c.right_ai_requirement) +  ' <rar ' )
             running = False
 
     redraw_game_window()

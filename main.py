@@ -48,7 +48,6 @@ class Car(object):
         self.ai_change_rate = 1/10
         self.alive = True
 
-
     def get_distance_checkers(self):
         for num in range(16):
             self.distance_checkers.append(DistanceCheckers(self, num))
@@ -92,7 +91,7 @@ class Car(object):
         if self.should_die():
             self.ai_death()
 
-        if g_time % 4 == 0 and self.derut:
+        elif g_time % 4 == 0 and self.derut and self.alive:
             self.derut = False
             if (self.last_x == self.x) and (self.last_y == self.last_y):
                 self.ai_death()
@@ -166,8 +165,6 @@ class Car(object):
     def ai_death(self):
         dead_cars.append(self)
         self.alive = False
-
-
 
     def change_ai_values(self, good_car_in):
 
@@ -399,7 +396,18 @@ while running:
 
     clock.tick(60)
 
-    if len(dead_cars) == len(cars):
+
+    alive_car_amount = 0
+    for c in cars:
+        if c.alive:
+            alive_car_amount += 1
+
+
+
+
+
+
+    if len(dead_cars) == len(cars) :
 
         temp_car_vec = []
         for c in dead_cars:
@@ -421,7 +429,6 @@ while running:
             if c.id == big_id1:
                 c.give_life()
                 cars.append(c)
-                print()
             else:
                 c.change_ai_values(random.choice(best_car_vec))
                 cars.append(c)
@@ -430,9 +437,8 @@ while running:
 
         dead_cars = []
         generation += 1
-        print("generation and best score:")
-        print(generation)
-        print(biggest_reward1)
+        print("generation: " + str(generation) + " and best score: " + str(biggest_reward1))
+
 
 
     for c in cars:
@@ -444,6 +450,8 @@ while running:
             for c in cars:
                 print(str(c.left_ai_values) +  ' <lav '  + str(c.left_ai_requirement) +  ' <lar '  + str(c.right_ai_values) +  ' <rav '  + str(c.right_ai_requirement) +  ' <rar ' )
             running = False
+
+
 
     redraw_game_window()
 

@@ -413,7 +413,7 @@ while running:
             alive_car_amount += 1
 
 
-
+    #print("alive car: " + str(alive_car_amount) + " dead car: " + str(len(dead_cars)) + " cars count: " + str(len(cars)) )
 
     pp = True
 
@@ -441,6 +441,7 @@ while running:
                 cars.append(c)
             elif pp and g_time % 10 == 0 :
                 c.generate_ai_values()
+                c.give_life()
                 cars.append(c)
                 pp = False
             else:

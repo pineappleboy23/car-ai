@@ -17,6 +17,13 @@ update 2/27/2021
 update 2/28/2021
   deleted all back pointing distance checkers
   ai change rate now varies from 1/5 to 1/20
+  
+  
+  
+update 3/1/2021
+  hopefuly fixed issue where unselected variables tended towards really small numbers (ai_change_rate old: .5 and 1.5 new: .6666666 and 1.5)
+  once every 10 seconds one car get 100% new values
+  
     
     
     

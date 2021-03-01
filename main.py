@@ -23,6 +23,8 @@ win.fill((0, 180, 20))
 car_img_wrong_size = pg.image.load("icar.png")
 car_img = pg.transform.smoothscale(car_img_wrong_size.convert_alpha(), (40, 40))
 
+start_angle = 90
+
 
 class Car(object):
     def __init__(self, id_in):
@@ -32,7 +34,7 @@ class Car(object):
         self.h = self.img.get_height()
         self.x = sw // 4
         self.y = sh // 4
-        self.angle = 90 # set 0
+        self.angle = start_angle
         self.speed = 4
         self.reward = 0
         self.current_checkpoint = 0
@@ -49,25 +51,25 @@ class Car(object):
         self.alive = True
 
     def get_distance_checkers(self):
-        for num in range(16):
+        for num in range(9):
             self.distance_checkers.append(DistanceCheckers(self, num))
 
     def generate_ai_values(self):
         self.forward_ai_requirement = random.random() - random.random() + 1
         self.forward_ai_values = []
-        for val in range(16):
+        for val in range(9):
             much_temp = random.random() - random.random() + 1
             self.forward_ai_values.append(much_temp)
 
         self.right_ai_requirement = random.random() - random.random() + 1
         self.right_ai_values = []
-        for val in range(16):
+        for val in range(9):
             much_temp = random.random() - random.random() + 1
             self.right_ai_values.append(much_temp)
 
         self.left_ai_requirement =  random.random() - random.random() + 1
         self.left_ai_values = []
-        for val in range(16):
+        for val in range(9):
             much_temp = random.random() - random.random() + 1
             self.left_ai_values.append(much_temp)
         #ai_values.append((self.forward_ai_values,self.forward_ai_requirement,self.left_ai_values,self.left_ai_requirement,self.right_ai_values,self.right_ai_requirement))
@@ -106,7 +108,7 @@ class Car(object):
         turn_right = False
         turn_left = False
         self.combined_in_ai_forward = []
-        for val in range(16):
+        for val in range(9):
 
             self.combined_in_ai_forward.append( self.input_values[val] * self.forward_ai_values[val])
         if statistics.mean(self.combined_in_ai_forward) / statistics.mean(self.input_values) > self.forward_ai_requirement:
@@ -115,14 +117,14 @@ class Car(object):
 
 
         self.combined_in_ai_right = []
-        for val in range(16):
+        for val in range(9):
             self.combined_in_ai_right.append(self.input_values[val] * self.right_ai_values[val])
 
         if statistics.mean(self.combined_in_ai_right) / statistics.mean(self.input_values) > self.right_ai_requirement:
             turn_right = True
 
         self.combined_in_ai_left = []
-        for val in range(16):
+        for val in range(9):
             self.combined_in_ai_left.append(self.input_values[val] * self.left_ai_values[val])
 
         if statistics.mean(self.combined_in_ai_left) / statistics.mean(self.input_values) > self.left_ai_requirement:
@@ -143,15 +145,17 @@ class Car(object):
     def turn_left(self):
         self.angle += 5
         self.update_maths()
+        
 
     def turn_right(self):
         self.angle -= 5
         self.update_maths()
-
+        
     def move_forward(self):
         self.x += self.cosine * self.speed
         self.y -= self.sine * self.speed
         self.update_maths()
+        
 
     def checkpoint_touching(self):
         for cp in checkpoints:
@@ -167,6 +171,10 @@ class Car(object):
         self.alive = False
 
     def change_ai_values(self, good_car_in):
+
+        self.ai_change_rate = 1/10
+
+        self.ai_change_rate *= 1 + random.random() - random.random()
 
         self.forward_ai_values = good_car_in.forward_ai_values
         self.forward_ai_requirement = good_car_in.forward_ai_requirement
@@ -199,7 +207,7 @@ class Car(object):
         self.time = g_time
         self.x = sw // 4
         self.y = sh // 4
-        self.angle = 90  # set 0?
+        self.angle = start_angle  # set 0?
         self.update_maths()
 
         self.reward = 0
@@ -211,7 +219,7 @@ class Car(object):
         self.time = g_time
         self.x = sw // 4
         self.y = sh // 4
-        self.angle = 90  # set 0?
+        self.angle = start_angle  # set 0?
         self.update_maths()
 
         self.reward = 0
@@ -250,15 +258,15 @@ class DistanceCheckers(object):
         self.w = 1
         self.h = 1
         self.color = (255, 255, 255)
-        self.direction = direction * 22.5
+        self.direction = direction * 22.5 + 180
         self.distance = 0
-        self.cosine = math.cos(math.radians(car_in.angle - 90 + self.direction))
-        self.sine = math.sin(math.radians(car_in.angle - 90 + self.direction))
+        self.cosine = math.cos(math.radians(car_in.angle + self.direction))
+        self.sine = math.sin(math.radians(car_in.angle + self.direction))
         self.max_distance = self.distance
 
     def update_distance(self, car_in):
-        self.cosine = math.cos(math.radians(car_in.angle - 90 + self.direction))
-        self.sine = math.sin(math.radians(car_in.angle - 90 + self.direction))
+        self.cosine = math.cos(math.radians(car_in.angle + self.direction))
+        self.sine = math.sin(math.radians(car_in.angle + self.direction))
         self.x = car_in.x
         self.y = car_in.y
 
@@ -371,13 +379,13 @@ checkpoints.append(CheckPoint((506,35), 2, 3, (83, 28, 195)))
 checkpoints.append(CheckPoint((706,35), 2, 4, (83, 28, 195)))
 checkpoints.append(CheckPoint((860,145), 0, 5, (83, 28, 195)))
 checkpoints.append(CheckPoint((860,545), 0, 6, (83, 28, 195)))
-checkpoints.append(CheckPoint((700,590), 2, 7, (83, 28, 195)))
+checkpoints.append(CheckPoint((400,580), 0, 7, (83, 28, 195)))
 checkpoints.append(CheckPoint((350,495), 1, 8, (83, 28, 195)))
 checkpoints.append(CheckPoint((21,295), 0, 9, (83, 28, 195)))
 
 
 cars = []
-car_amount = 50
+car_amount = 80
 for id in range(car_amount):
     cars.append(Car(id))
 
@@ -450,7 +458,6 @@ while running:
             for c in cars:
                 print(str(c.left_ai_values) +  ' <lav '  + str(c.left_ai_requirement) +  ' <lar '  + str(c.right_ai_values) +  ' <rav '  + str(c.right_ai_requirement) +  ' <rar ' )
             running = False
-
 
 
     redraw_game_window()

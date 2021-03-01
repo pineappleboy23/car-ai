@@ -7,8 +7,6 @@ import time
 
 start_time = round(time.time())
 g_time = round(time.time()) - start_time
-ai_change_rate = 1 # higher number means slower change
-ai_values = []
 generation = 0
 
 clock = pg.time.Clock()
@@ -72,9 +70,6 @@ class Car(object):
         for val in range(9):
             much_temp = random.random() - random.random() + 1
             self.left_ai_values.append(much_temp)
-        #ai_values.append((self.forward_ai_values,self.forward_ai_requirement,self.left_ai_values,self.left_ai_requirement,self.right_ai_values,self.right_ai_requirement))
-        # if len(ai_values) > 300:
-        #    ai_values = []
 
     def draw(self, win):
         win.blit(self.rotated_surf, self.rotated_rect)
@@ -170,11 +165,21 @@ class Car(object):
         dead_cars.append(self)
         self.alive = False
 
+    def fetch_one_minus_value(self, multiplier): #.5 if less than 1 -> 1.5 -> 1/1.5 = .66666 -> return .66666
+        my_rand = (random.random() - random.random()) * multiplier
+        if my_rand < 0:
+            tea_temp = 1 - my_rand
+            tea_temp = 1 / tea_temp
+            return tea_temp - 1
+        else:
+            return my_rand
+
+
     def change_ai_values(self, good_car_in):
 
-        self.ai_change_rate = 1/10
+        self.ai_change_rate = 1/14
 
-        self.ai_change_rate *= 1 + random.random() - random.random()
+        self.ai_change_rate *= 1 + self.fetch_one_minus_value(.5)
 
         self.forward_ai_values = good_car_in.forward_ai_values
         self.forward_ai_requirement = good_car_in.forward_ai_requirement
@@ -186,22 +191,22 @@ class Car(object):
         self.left_ai_requirement = good_car_in.left_ai_requirement
 
 
-        self.forward_ai_requirement *= (1 + ((random.random() - random.random()) * self.ai_change_rate))
+        self.forward_ai_requirement *= 1 + self.fetch_one_minus_value(self.ai_change_rate)
         self.temp_forward_ai_values = []
         for val in self.forward_ai_values:
-            self.temp_forward_ai_values.append(val * (1 + ((random.random() - random.random()) * self.ai_change_rate)))
+            self.temp_forward_ai_values.append(val * (1 + self.fetch_one_minus_value(self.ai_change_rate)))
         self.forward_ai_values = self.temp_forward_ai_values
 
-        self.right_ai_requirement *= (1 + ((random.random() - random.random()) * self.ai_change_rate))
+        self.right_ai_requirement *= 1 + self.fetch_one_minus_value(self.ai_change_rate)
         self.temp_right_ai_values = []
         for val in self.right_ai_values:
-            self.temp_right_ai_values.append(val * (1 + ((random.random() - random.random()) * self.ai_change_rate)))
+            self.temp_right_ai_values.append(val * (1 + self.fetch_one_minus_value(self.ai_change_rate)))
         self.right_ai_values = self.temp_right_ai_values
 
-        self.left_ai_requirement *= (1 + ((random.random() - random.random()) * self.ai_change_rate))
+        self.left_ai_requirement *= 1 + self.fetch_one_minus_value(self.ai_change_rate)
         self.temp_left_ai_values = []
         for val in self.left_ai_values:
-            self.temp_left_ai_values.append(val * (1 + ((random.random() - random.random()) * self.ai_change_rate)))
+            self.temp_left_ai_values.append(val * (1 + self.fetch_one_minus_value(self.ai_change_rate)))
         self.left_ai_values = self.temp_left_ai_values
 
         self.time = g_time
@@ -262,7 +267,6 @@ class DistanceCheckers(object):
         self.distance = 0
         self.cosine = math.cos(math.radians(car_in.angle + self.direction))
         self.sine = math.sin(math.radians(car_in.angle + self.direction))
-        self.max_distance = self.distance
 
     def update_distance(self, car_in):
         self.cosine = math.cos(math.radians(car_in.angle + self.direction))
@@ -272,9 +276,7 @@ class DistanceCheckers(object):
 
         self.distance = 0
         self.move()
-        if self.distance > self.max_distance:
-            self.max_distance = self.distance
-        return self.max_distance - self.distance + 1
+        return self.distance
 
     def move(self):
         while not self.keep_moving():
@@ -413,7 +415,7 @@ while running:
 
 
 
-
+    pp = True
 
     if len(dead_cars) == len(cars) :
 
@@ -437,6 +439,10 @@ while running:
             if c.id == big_id1:
                 c.give_life()
                 cars.append(c)
+            elif pp and g_time % 10 == 0 :
+                c.generate_ai_values()
+                cars.append(c)
+                pp = False
             else:
                 c.change_ai_values(random.choice(best_car_vec))
                 cars.append(c)

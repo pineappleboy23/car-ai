@@ -36,6 +36,9 @@ hotfix 3/1/2021
   forgot to call function to update reward 
   now shows the best score car
   
+
+log 3/1/2021
+  the ai is nutty i will probably be done with the project now
     
     
     

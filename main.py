@@ -216,7 +216,7 @@ class Car(object):
 
     def change_ai_values(self, good_car_in):
 
-        self.ai_change_rate = 1/14
+        self.ai_change_rate = 1/10
 
         self.ai_change_rate *= 1 + self.fetch_one_minus_value(.5)
 
@@ -236,13 +236,13 @@ class Car(object):
             self.temp_forward_ai_values.append(val * (1 + self.fetch_one_minus_value(self.ai_change_rate)))
         self.forward_ai_values = self.temp_forward_ai_values
 
-        self.right_ai_requirement *= 1 + self.fetch_one_minus_value((10 * self.ai_change_rate))
+        self.right_ai_requirement *= 1 + self.fetch_one_minus_value(self.ai_change_rate)
         self.temp_right_ai_values = []
         for val in self.right_ai_values:
             self.temp_right_ai_values.append(val * (1 + self.fetch_one_minus_value(self.ai_change_rate)))
         self.right_ai_values = self.temp_right_ai_values
 
-        self.left_ai_requirement *= 1 + self.fetch_one_minus_value((10 * self.ai_change_rate))
+        self.left_ai_requirement *= 1 + self.fetch_one_minus_value( self.ai_change_rate)
         self.temp_left_ai_values = []
         for val in self.left_ai_values:
             self.temp_left_ai_values.append(val * (1 + self.fetch_one_minus_value(self.ai_change_rate)))
@@ -414,7 +414,6 @@ def redraw_game_window():
 
 
 
-
 cars = []
 car_amount = 50
 for id in range(car_amount):
@@ -478,11 +477,19 @@ while running:
                 c.change_ai_values(random.choice(best_car_vec))
                 cars.append(c)
 
+        temp_g_time = g_time
+        hour = temp_g_time // 3600
+        temp_g_time %= 3600
+        minute = temp_g_time // 60
+        temp_g_time %= 60
+        second = temp_g_time
+        time_str = str( str(hour) + ":" + str(minute) + ":" + str(second) )
 
 
         dead_cars = []
         generation += 1
-        print("generation: " + str(generation) + " and most zones passed: " + str(most_zones_while) + " biggest zone score: " + str(big_zone_reward_while))
+        print("generation: " + str(generation) +  " time: " + time_str )
+        print( "most zones passed: " + str(most_zones_while) +  " biggest zone score: " + str(big_zone_reward_while))
 
 
 

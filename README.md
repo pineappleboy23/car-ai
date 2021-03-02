@@ -27,6 +27,10 @@ update 3/1/2021
 hot fix 3/1/2021
   ""once every 10 seconds one car get 100% new values"" issue where this didn't set car alive value to true
   
+  
+update 3/1/2021
+  i removed checkpoints and added zones currently checking code for bugs
+  
     
     
     

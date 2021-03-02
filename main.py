@@ -98,6 +98,7 @@ class Car(object):
             self.derut = True
 
         self.update_maths()
+        self.update_reward()
 
     def ai_calculations(self):
         turn_right = False
@@ -378,27 +379,35 @@ def redraw_game_window():
     big_barrier.draw(win)
 
     big_id = 0
-    biggest_reward = -1
+    most_zones_redraw = -1
+    big_current_zone_reward_redraw = 0
+
     for c in cars:
-        if biggest_reward < c.reward:
-            biggest_reward = c.reward
-            big_id = c.id
+        if most_zones_redraw <= c.zones_passed:
+            if most_zones_redraw < c.zones_passed:
+                most_zones_redraw = c.zones_passed
+                big_current_zone_reward_redraw = c.current_zone_reward
+                big_id = c.id
+            elif c.current_zone_reward > big_current_zone_reward_redraw:
+                most_zones_redraw = c.zones_passed
+                big_current_zone_reward_redraw = c.current_zone_reward
+                big_id = c.id
 
     drew = False
     for c in cars:
-        if c.reward == biggest_reward and c.alive:
+        if c.id == big_id and c.alive:
             c.draw(win)
             for l in c.distance_checkers:
                 l.draw(win)
             drew = True
-            break
 
     if not drew:
         for c in cars:
-            if c.id == big_id:
+            if c.zones_passed == most_zones_redraw:
                 c.draw(win)
                 for l in c.distance_checkers:
                     l.draw(win)
+                break
 
 
     pg.display.update()
@@ -407,7 +416,7 @@ def redraw_game_window():
 
 
 cars = []
-car_amount = 80
+car_amount = 50
 for id in range(car_amount):
     cars.append(Car(id))
 

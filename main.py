@@ -35,7 +35,6 @@ class Car(object):
         self.angle = start_angle
         self.speed = 4
         self.reward = 0
-        self.current_checkpoint = 0
         self.update_maths()
         self.distance_checkers = []
         self.get_distance_checkers()
@@ -47,6 +46,9 @@ class Car(object):
         self.last_y = 0
         self.ai_change_rate = 1/10
         self.alive = True
+        self.zones_passed = 0
+        self.current_zone_reward = 0
+        self.current_zone = 0
 
     def get_distance_checkers(self):
         for num in range(9):
@@ -82,8 +84,6 @@ class Car(object):
             self.input_values.append(temp_1)
 
         self.ai_calculations() # this moves car
-
-        self.checkpoint_touching()
 
         if self.should_die():
             self.ai_death()
@@ -150,16 +150,54 @@ class Car(object):
         self.x += self.cosine * self.speed
         self.y -= self.sine * self.speed
         self.update_maths()
-        
 
-    def checkpoint_touching(self):
-        for cp in checkpoints:
-            if self.check_inside(cp) and cp.name == self.current_checkpoint :
-                self.reward += 50
-                if cp.name == 9:
-                    self.current_checkpoint = 0
-                else:
-                    self.current_checkpoint += 1
+
+    def update_reward(self):
+        if (self.x > 20 and self.y > 130) and (self.x < 396 and self.y < 204):
+            if self.current_zone == 7:
+                self.zones_passed += 1
+                self.current_zone = 0
+            self.current_zone_reward = self.x - 20
+
+        elif (self.x > 396 and self.y > 111) and (self.x < 471 and self.y < 204):
+            if self.current_zone == 0:
+                self.zones_passed += 1
+                self.current_zone = 1
+            self.current_zone_reward = 204 - self.y
+
+        elif (self.x > 396 and self.y > 34) and (self.x < 860 and self.y < 111):
+            if self.current_zone == 1:
+                self.zones_passed += 1
+                self.current_zone = 2
+            self.current_zone_reward = self.x - 396
+
+        elif (self.x > 860 and self.y > 34) and (self.x < 934 and self.y < 590):
+            if self.current_zone == 2:
+                self.zones_passed += 1
+                self.current_zone = 3
+            self.current_zone_reward = self.y - 34
+        elif (self.x > 470 and self.y > 590) and (self.x < 934 and self.y < 664):
+            if self.current_zone == 3:
+                self.zones_passed += 1
+                self.current_zone = 4
+            self.current_zone_reward = 934 - self.x
+        elif (self.x > 396 and self.y > 570) and (self.x < 470 and self.y < 664):
+            if self.current_zone == 4:
+                self.zones_passed += 1
+                self.current_zone = 5
+            self.current_zone_reward = 664 - self.x
+        elif (self.x > 86 and self.y > 494) and (self.x < 470 and self.y < 570):
+            if self.current_zone == 5:
+                self.zones_passed += 1
+                self.current_zone = 6
+            self.current_zone_reward = 470 - self.x
+
+        elif (self.x > 20 and self.y > 204) and (self.x < 86 and self.y < 570):
+            if self.current_zone == 6:
+                self.zones_passed += 1
+                self.current_zone = 7
+            self.current_zone_reward = 570 - self.y
+
 
     def ai_death(self):
         dead_cars.append(self)
@@ -197,13 +235,13 @@ class Car(object):
             self.temp_forward_ai_values.append(val * (1 + self.fetch_one_minus_value(self.ai_change_rate)))
         self.forward_ai_values = self.temp_forward_ai_values
 
-        self.right_ai_requirement *= 1 + self.fetch_one_minus_value(self.ai_change_rate)
+        self.right_ai_requirement *= 1 + self.fetch_one_minus_value((10 * self.ai_change_rate))
         self.temp_right_ai_values = []
         for val in self.right_ai_values:
             self.temp_right_ai_values.append(val * (1 + self.fetch_one_minus_value(self.ai_change_rate)))
         self.right_ai_values = self.temp_right_ai_values
 
-        self.left_ai_requirement *= 1 + self.fetch_one_minus_value(self.ai_change_rate)
+        self.left_ai_requirement *= 1 + self.fetch_one_minus_value((10 * self.ai_change_rate))
         self.temp_left_ai_values = []
         for val in self.left_ai_values:
             self.temp_left_ai_values.append(val * (1 + self.fetch_one_minus_value(self.ai_change_rate)))
@@ -216,9 +254,12 @@ class Car(object):
         self.update_maths()
 
         self.reward = 0
-        self.current_checkpoint = 0
         self.derut = False
         self.alive = True
+
+        self.zones_passed = 0
+        self.current_zone_reward = 0
+        self.current_zone = 0
 
     def give_life(self):
         self.time = g_time
@@ -228,9 +269,12 @@ class Car(object):
         self.update_maths()
 
         self.reward = 0
-        self.current_checkpoint = 0
         self.derut = False
         self.alive = True
+
+        self.zones_passed = 0
+        self.current_zone_reward = 0
+        self.current_zone = 0
 
     def update_maths(self):
         self.rotated_surf = pg.transform.rotate(self.img, self.angle)
@@ -246,9 +290,7 @@ class Car(object):
             return True
 
     def check_inside(self, track_in):
-        if type(track_in) == type(checkpoints[0]):
-            temp_num = 0
-        elif type(track_in) == type(smol_barrier):
+        if type(track_in) == type(smol_barrier):
             temp_num = 20
         elif type(track_in) == type(smol_boundary):
             temp_num = -20
@@ -323,23 +365,6 @@ class Barrier(object):
     def draw(self, win):
         pg.draw.rect(win, self.color, [self.x, self.y, self.w, self.h])
 
-class CheckPoint(object):
-    def __init__(self, location, orientation, name, color):
-        self.x, self.y = location
-        self.name = name
-        self.color = color
-        if orientation == 1:
-            self.w = 10
-            self.h = 65
-        elif orientation == 2:
-            self.w = 10
-            self.h = 75
-        elif orientation == 0:
-            self.w = 65
-            self.h = 10
-
-    def draw(self, win):
-        pg.draw.rect(win, self.color, (self.x, self.y, self.w, self.h))
 
 
 
@@ -352,9 +377,6 @@ def redraw_game_window():
     smol_barrier.draw(win)
     big_barrier.draw(win)
 
-    for cp in checkpoints:
-        cp.draw(win)
-
     big_id = 0
     biggest_reward = -1
     for c in cars:
@@ -362,28 +384,26 @@ def redraw_game_window():
             biggest_reward = c.reward
             big_id = c.id
 
+    drew = False
     for c in cars:
-        if c.id == big_id:
-
+        if c.reward == biggest_reward and c.alive:
+            c.draw(win)
             for l in c.distance_checkers:
                 l.draw(win)
-            c.draw(win)
+            drew = True
+            break
+
+    if not drew:
+        for c in cars:
+            if c.id == big_id:
+                c.draw(win)
+                for l in c.distance_checkers:
+                    l.draw(win)
 
 
     pg.display.update()
 
 
-checkpoints = []
-checkpoints.append(CheckPoint((320,140), 1, 0, (83, 28, 195)))
-checkpoints.append(CheckPoint((386,140), 0, 1, (83, 28, 195)))
-checkpoints.append(CheckPoint((406,120), 0, 2, (83, 28, 195)))
-checkpoints.append(CheckPoint((506,35), 2, 3, (83, 28, 195)))
-checkpoints.append(CheckPoint((706,35), 2, 4, (83, 28, 195)))
-checkpoints.append(CheckPoint((860,145), 0, 5, (83, 28, 195)))
-checkpoints.append(CheckPoint((860,545), 0, 6, (83, 28, 195)))
-checkpoints.append(CheckPoint((400,580), 0, 7, (83, 28, 195)))
-checkpoints.append(CheckPoint((350,495), 1, 8, (83, 28, 195)))
-checkpoints.append(CheckPoint((21,295), 0, 9, (83, 28, 195)))
 
 
 cars = []
@@ -406,7 +426,6 @@ while running:
 
     clock.tick(60)
 
-
     alive_car_amount = 0
     for c in cars:
         if c.alive:
@@ -417,33 +436,35 @@ while running:
 
     pp = True
 
-    if len(dead_cars) == len(cars) :
+    if len(dead_cars) == len(cars):
 
         temp_car_vec = []
         for c in dead_cars:
 
-            big_id1 = 0
-            biggest_reward1 = -1
+            big_id_while = 0
+            most_zones_while = -1
+            big_zone_reward_while = 0
             for c in dead_cars:
-                if biggest_reward1 < c.reward:
-                    biggest_reward1 = c.reward
-                    big_id1 = c.id
+                if most_zones_while <= c.zones_passed:
+                    if most_zones_while < c.zones_passed:
+                        most_zones_while = c.zones_passed
+                        big_zone_reward_while = c.current_zone_reward
+                        big_id_while = c.id
+                    elif c.current_zone_reward > big_zone_reward_while:
+                        most_zones_while = c.zones_passed
+                        big_zone_reward_while = c.current_zone_reward
+                        big_id_while = c.id
 
             best_car_vec = []
             for c in dead_cars:
-                if biggest_reward1 == c.reward:
+                if most_zones_while == c.zones_passed:
                     best_car_vec.append(c)
 
         cars = []
         for c in dead_cars:
-            if c.id == big_id1:
+            if c.id == big_id_while:
                 c.give_life()
                 cars.append(c)
-            elif pp and g_time % 10 == 0 :
-                c.generate_ai_values()
-                c.give_life()
-                cars.append(c)
-                pp = False
             else:
                 c.change_ai_values(random.choice(best_car_vec))
                 cars.append(c)
@@ -452,7 +473,7 @@ while running:
 
         dead_cars = []
         generation += 1
-        print("generation: " + str(generation) + " and best score: " + str(biggest_reward1))
+        print("generation: " + str(generation) + " and most zones passed: " + str(most_zones_while) + " biggest zone score: " + str(big_zone_reward_while))
 
 
 

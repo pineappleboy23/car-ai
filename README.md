@@ -31,6 +31,11 @@ hot fix 3/1/2021
 update 3/1/2021
   i removed checkpoints and added zones currently checking code for bugs
   
+  
+hotfix 3/1/2021
+  forgot to call function to update reward 
+  now shows the best score car
+  
     
     
     

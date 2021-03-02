@@ -39,6 +39,11 @@ hotfix 3/1/2021
 
 log 3/1/2021
   the ai is nutty i will probably be done with the project now
+  
+
+update 3/1/2021
+  i added time
+  if you wait for about 500 generations it should complete a lap around the track
     
     
     
